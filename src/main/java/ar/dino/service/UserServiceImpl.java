@@ -2,6 +2,8 @@ package ar.dino.service;
 
 import java.util.Optional;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,10 +42,40 @@ public class UserServiceImpl implements UserService{
 	 
 
 	    private boolean checkPasswordValid(User user) throws Exception {          //Metodos que lanzan una Excepcion
-			if ( !user.getPassword().equals(user.getConfirmPassword())) {      //si son diferentes por eso el admiracion al principio
+	    	 if (user.getConfirmPassword() == null || user.getConfirmPassword().isEmpty()) {  //si el confirm password esta vacio o nulo, le agregamos esta excepcion
+	 			throw new Exception("Confirm Password es obligatorio");
+	 		}
+    	
+	    	
+	    	if ( !user.getPassword().equals(user.getConfirmPassword())) {      //si son diferentes por eso el admiracion al principio
 				throw new Exception("Password y Confirm Password no son iguales");
 			}
 			return true;
 	    } 
         
+	    
+	   //video 6
+
+		@Override
+		public User getUserById(Long id) throws Exception {
+			return userRepository.findById(id).orElseThrow(() -> new Exception("El usuario para editar no existe."));  //ojo expresion lambda para lanzar una excepcion si no encuentra el usuario
+
+		}
+
+
+		@Override
+		public User updateUser(User fromUser) throws Exception {
+			User toUser = getUserById(fromUser.getId());
+			mapUser(fromUser, toUser);
+		    return userRepository.save(toUser);
+		}
+	    
+		protected void mapUser(User from, User to) {
+			to.setUsername(from.getUsername());
+			to.setFirstName(from.getFirstName());
+			to.setLastName(from.getLastName());
+			to.setEmail(from.getEmail());
+			to.setRoles(from.getRoles());
+		}
+	    
 }
