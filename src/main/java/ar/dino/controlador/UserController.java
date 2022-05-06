@@ -9,6 +9,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import ar.dino.entity.User;
@@ -85,7 +86,58 @@ public class UserController {
   	}
   
   
+  //VIDEO 6 editar usuario
   
+  
+  @GetMapping("/editUser/{id}")                                                      // de esta forma le decimos a spring que la url nos pasa un parametro. Fijate como lo hice en la ApiRest o en Mito
+  public String getEditUserForm(Model model, @PathVariable(name ="id")Long id)throws Exception{    //el name del PathVariable es el name que viene del formulario
+  		User userToEdit = userService.getUserById(id);
+
+  		model.addAttribute("userForm", userToEdit);
+  		model.addAttribute("userList", userService.getAllUsers());
+  		model.addAttribute("roles",roleRepository.findAll());
+  		model.addAttribute("formTab","active");
+  		model.addAttribute("editMode","true");         //esto regula el comportamiento de la pagina, nos dice si es para editar o para guardar segun lo que venga del user-form
+
+  		return "user-form/user-view";
+  	}
+  
+  
+  
+  
+  @PostMapping("/editUser")
+	public String postEditUserForm(@Valid @ModelAttribute("userForm")User user, BindingResult result, ModelMap model) {
+		if(result.hasErrors()) {
+			model.addAttribute("userForm", user);
+			model.addAttribute("formTab","active");
+			model.addAttribute("editMode","true");
+		}else {
+			try {
+				userService.updateUser(user);                  //nuevo metodo para actualizar usuario
+				model.addAttribute("userForm", new User());
+				model.addAttribute("listTab","active");
+			} catch (Exception e) {
+				model.addAttribute("formErrorMessage",e.getMessage());
+				model.addAttribute("userForm", user);
+				model.addAttribute("formTab","active");
+				model.addAttribute("userList", userService.getAllUsers());
+				model.addAttribute("roles",roleRepository.findAll());
+				model.addAttribute("editMode","true");
+			}
+		}
+
+		model.addAttribute("userList", userService.getAllUsers());
+		model.addAttribute("roles",roleRepository.findAll());
+		return "user-form/user-view";
+
+	}
+  
+  
+  
+    @GetMapping("/userForm/cancel")
+   	public String cancelEditUser(ModelMap model) {
+		return "redirect:/userForm";  //  hace un redirect al user-form 
+	}
   
   
   
