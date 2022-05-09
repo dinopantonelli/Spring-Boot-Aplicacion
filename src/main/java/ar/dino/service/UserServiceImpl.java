@@ -77,5 +77,15 @@ public class UserServiceImpl implements UserService{
 			to.setEmail(from.getEmail());
 			to.setRoles(from.getRoles());
 		}
+		
+		
+		// video 7
+
+        public void deleteUser(Long id) throws Exception {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new Exception("UsernotFound in deleteUser -"+ this.getClass().getName()));
+
+		userRepository.delete(user);
+	 }
 	    
 }

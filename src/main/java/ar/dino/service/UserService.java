@@ -14,5 +14,7 @@ public interface UserService {
   public User getUserById(Long id) throws Exception;   //video 6
 
   public User updateUser(User user) throws Exception;  //video 6
+  
+  public void deleteUser(Long id) throws Exception;   //video 7
         
 }
