@@ -7,6 +7,7 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import ar.dino.dta.ChangePasswordForm;
 import ar.dino.entity.User;
 import ar.dino.repo.UserRepository;
 
@@ -88,4 +89,30 @@ public class UserServiceImpl implements UserService{
 		userRepository.delete(user);
 	 }
 	    
+        
+        
+       //video 8
+        
+        @Override
+    	public User changePassword(ChangePasswordForm form) throws Exception {
+    		User user = getUserById(form.getId());               //en el controlador le pasamos el id al que pertenece
+
+    		if ( !user.getPassword().equals(form.getCurrentPassword())) {
+    			throw new Exception ("Current Password invalido.");
+    		}
+
+    		if( user.getPassword().equals(form.getNewPassword())) {
+    			throw new Exception ("Nuevo debe ser diferente al password actual.");
+    		}
+
+    		if( !form.getNewPassword().equals(form.getConfirmPassword())) {
+    			throw new Exception ("Nuevo Password y Current Password no coinciden.");
+    		}
+    		 //si no entra en ninguna excepcion setear el nuevo password
+    		user.setPassword(form.getNewPassword());
+    		return userRepository.save(user);
+    	}
+        
+        
+        
 }
