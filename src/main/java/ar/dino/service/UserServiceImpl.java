@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import ar.dino.Exceptions.UsernameOrIdNotFound;
 import ar.dino.dta.ChangePasswordForm;
 import ar.dino.entity.User;
 import ar.dino.repo.UserRepository;
@@ -69,13 +70,13 @@ public class UserServiceImpl implements UserService{
 	   //video 6
 
 		@Override
-		public User getUserById(Long id) throws Exception {
-			return userRepository.findById(id).orElseThrow(() -> new Exception("El usuario para editar no existe."));  //ojo expresion lambda para lanzar una excepcion si no encuentra el usuario
+		public User getUserById(Long id) throws UsernameOrIdNotFound {
+			return userRepository.findById(id).orElseThrow(() -> new UsernameOrIdNotFound("El usuario no existe."));  //ojo expresion lambda para lanzar una excepcion si no encuentra el usuario
 
 		}
 
 
-		@Override
+		
 		public User updateUser(User fromUser) throws Exception {
 			User toUser = getUserById(fromUser.getId());
 			mapUser(fromUser, toUser);
@@ -92,12 +93,19 @@ public class UserServiceImpl implements UserService{
 		
 		
 		// video 7
-		@PreAuthorize("hasAnyRole('ROLE_ADMIN')")           // VIDEO 9
-        public void deleteUser(Long id) throws Exception {
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new Exception("UsernotFound in deleteUser -"+ this.getClass().getName()));
-
-		userRepository.delete(user);
+		@PreAuthorize("hasAuthority('ROLE_ADMIN')")           // VIDEO 9
+        public void deleteUser(Long id) throws UsernameOrIdNotFound {
+		//User user = userRepository.findById(id)
+			//	.orElseThrow(() -> new Exception("Usuario no encontrado para borrar"+ this.getClass().getName()));
+		if (isLoggedUserADMIN()) {	
+         User user=getUserById(id);
+         System.out.println(isLoggedUserADMIN());
+         userRepository.delete(user);
+		}else {
+			throw new UsernameOrIdNotFound ("No tiene permiso para borrar un usuario");	
+		}
+			
+		
 	 }
 	    
         
@@ -148,17 +156,43 @@ public class UserServiceImpl implements UserService{
 		}
 
 
-         private boolean isLoggedUserADMIN() {  // si soy admin no necesito decir mi password para editar un password ADEMAS de que lo oculte del frontend
-	   		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //esto trae el usuario autenticado, con la validacion y todo grabado en session
+	       private boolean isLoggedUserADMIN() {
+	   		//Obtener el usuario logeado
+	   		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //asi se trae el objeto que este en el contexto y que este autenticado
+
 	   		UserDetails loggedUser = null;
-	   		if (principal instanceof UserDetails) {          // preguno si es una instancia de UserDetail, hacer urso de Security                    
-	   			loggedUser = (UserDetails) principal;     //   Si es hago el cast
-	   		
-	   			loggedUser.getAuthorities().stream()                            
-	   					.filter(x -> "ADMIN".equals(x.getAuthority() ))     // si es ADMIN atravesando las autoridades traigame el usuario  
-	   					.findFirst().orElse(null);                     //loggedUser = null;
+	   		Object roles = null;     //creo un objeto roles
+
+	   		//Verificar que ese objeto traido de sesion es el usuario
+	   		if (principal instanceof UserDetails) {
+	   			loggedUser = (UserDetails) principal;
+
+	   			roles = loggedUser.getAuthorities().stream()
+	   					.filter(x -> "ROLE_ADMIN".equals(x.getAuthority())).findFirst()
+	   					.orElse(null); 
 	   		}
-	   		return loggedUser != null ? true :false;  // esto es si es distinto de null, retorna true, si es null retorna falso
+	   		return roles != null ? true : false;
 	   	}
+	       
+	       
+	       
+	       
+	       private User getLoggedUser() throws Exception {
+	   		//Obtener el usuario logeado
+	   		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	    
+	                  UserDetails loggedUser = null;
+
+	   		//Verificar que ese objeto traido de sesion es el usuario
+	   		if (principal instanceof UserDetails) {    //verificamos si es un objeto de spring security
+	   			loggedUser = (UserDetails) principal;
+	   		}
+
+	                   User myUser = userRepository.findByUsername(loggedUser.getUsername()).orElseThrow(() -> 
+	                       new Exception("Error obteniendo el usuario logeado desde la sesion.")); //lo encuentra por el nombre en el repositorio fijarse donde esta el metodo
+
+	   		return myUser;
+	   	}
+
         
 }

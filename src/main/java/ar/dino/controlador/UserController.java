@@ -6,6 +6,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import ar.dino.Exceptions.UsernameOrIdNotFound;
 import ar.dino.dta.ChangePasswordForm;
 import ar.dino.entity.User;
 import ar.dino.repo.RoleRepository;
@@ -155,7 +157,7 @@ public class UserController {
    	public String deleteUser(Model model, @PathVariable(name="id") Long id) {
    		try {
    			userService.deleteUser(id);
-   		} catch (Exception e) {
+   		} catch (UsernameOrIdNotFound e) {
    			model.addAttribute("deleteError","The user could not be deleted.");
    		}
    		
