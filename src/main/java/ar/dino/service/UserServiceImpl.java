@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import ar.dino.Exceptions.CustomeFieldValidationException;
 import ar.dino.Exceptions.UsernameOrIdNotFound;
 import ar.dino.dta.ChangePasswordForm;
 import ar.dino.entity.User;
@@ -45,26 +46,24 @@ public class UserServiceImpl implements UserService{
 		}
 	
 	
-	private boolean checkUsernameAvailable(User user) throws Exception { 
-		Optional<User> userFound = userRepository.findByUsername(user.getUsername());
-		if (userFound.isPresent()) {
-			throw new Exception("Username no disponible");
-		}
-		return true;
-	}
-	 
-
-	    private boolean checkPasswordValid(User user) throws Exception {          //Metodos que lanzan una Excepcion
-	    	 if (user.getConfirmPassword() == null || user.getConfirmPassword().isEmpty()) {  //si el confirm password esta vacio o nulo, le agregamos esta excepcion
-	 			throw new Exception("Confirm Password es obligatorio");
-	 		}
-    	
-	    	
-	    	if ( !user.getPassword().equals(user.getConfirmPassword())) {      //si son diferentes por eso el admiracion al principio
-				throw new Exception("Password y Confirm Password no son iguales");
+	  private boolean checkUsernameAvailable(User user) throws Exception {
+			Optional<User> userFound = userRepository.findByUsername(user.getUsername());
+			if (userFound.isPresent()) {
+			            throw new CustomeFieldValidationException("Username no disponible","username");
 			}
 			return true;
-	    } 
+		}
+
+	        private boolean checkPasswordValid(User user) throws Exception {
+			if (user.getConfirmPassword() == null || user.getConfirmPassword().isEmpty()) {
+				throw new CustomeFieldValidationException("Confirm Password es obligatorio","confirmPassword");  //mensaje y nombre del campo
+			}
+
+			if ( !user.getPassword().equals(user.getConfirmPassword())) {
+				throw new CustomeFieldValidationException("Password y Confirm Password no son iguales","password");
+			}
+			return true;
+		}
         
 	    
 	   //video 6

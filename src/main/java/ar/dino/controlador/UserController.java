@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import ar.dino.Exceptions.CustomeFieldValidationException;
 import ar.dino.Exceptions.UsernameOrIdNotFound;
 import ar.dino.dta.ChangePasswordForm;
 import ar.dino.entity.User;
@@ -70,7 +71,7 @@ public class UserController {
   
   // video 5  crear Usuario
   
-  @PostMapping("/userForm")
+/* @PostMapping("/userForm")
   public String postUserForm(@Valid @ModelAttribute("userForm")User user, BindingResult result, ModelMap model) {
   		if(result.hasErrors()) {
   			model.addAttribute("userForm", user);
@@ -80,11 +81,46 @@ public class UserController {
   				userService.createUser(user);                        // crear el metodo para la creacion de Usuario  en el UserService
   				model.addAttribute("userForm", new User());         // le decimos que muestre el form new user para llenar 
   				model.addAttribute("listTab","active");            // le decimos que muestre la lista
+  				
+  				
   			} catch (Exception e) {                                        // de aca viene el error del UserServiceImpl
   				model.addAttribute("formErrorMessage",e.getMessage());      // con esto le pasamos los mensajes de error al HTML
-  				                  
+   				model.addAttribute("formTab","active"); //con esto dejamos activos los campos en el forulario
+          
+  			}
+  		   
+  		}
+
+  		model.addAttribute("userList", userService.getAllUsers());
+  		model.addAttribute("roles",roleRepository.findAll());
+  		return "user-form/user-view";
+  	} */
+  
+  
+ @PostMapping("/userForm")
+  public String postUserForm(@Valid @ModelAttribute("userForm")User user, BindingResult result, ModelMap model) {
+  		if(result.hasErrors()) {
+  			model.addAttribute("userForm", user);
+  			model.addAttribute("formTab","active");
+  		}else {
+  			try {
+  				userService.createUser(user);                        // crear el metodo para la creacion de Usuario  en el UserService
+  				model.addAttribute("userForm", new User());         // le decimos que muestre el form new user para llenar 
+  				model.addAttribute("listTab","active");            // le decimos que muestre la lista
+  			
+            }catch (CustomeFieldValidationException cfve) {           // de aca viene el error del UserServiceImpl para CAMPOS, si hay otro tipo de error se va por el otro catch
+  				result.rejectValue(cfve.getFieldName(), null, cfve.getMessage());
+                model.addAttribute("userForm", user);
   				model.addAttribute("formTab","active"); //con esto dejamos activos los campos en el forulario
-             
+                model.addAttribute("userList", userService.getAllUsers());
+				model.addAttribute("roles",roleRepository.findAll());
+  			} 
+  			catch (Exception e) {                                        // de aca viene el error del UserServiceImpl
+  				model.addAttribute("formErrorMessage",e.getMessage());      // con esto le pasamos los mensajes de error al HTML
+  				model.addAttribute("userForm", user);
+                model.addAttribute("formTab","active"); //con esto dejamos activos los campos en el forulario
+                model.addAttribute("userList", userService.getAllUsers());
+				model.addAttribute("roles",roleRepository.findAll());
   			}
   		}
 
@@ -92,8 +128,6 @@ public class UserController {
   		model.addAttribute("roles",roleRepository.findAll());
   		return "user-form/user-view";
   	}
-  
-  
   //VIDEO 6 editar usuario
   
   
@@ -158,7 +192,7 @@ public class UserController {
    		try {
    			userService.deleteUser(id);
    		} catch (UsernameOrIdNotFound e) {
-   			model.addAttribute("deleteError","The user could not be deleted.");
+   			model.addAttribute("deleteError","El usuario no pudo ser borrado.");
    		}
    		
          return userForm(model); 

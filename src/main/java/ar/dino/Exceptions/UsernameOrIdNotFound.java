@@ -6,7 +6,12 @@ public class UsernameOrIdNotFound extends Exception{
 
 
 
-    public UsernameOrIdNotFound() {        //mensaje comun
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2721192143211720752L;
+
+	public UsernameOrIdNotFound() {        //mensaje comun
 		super("Usuario o Id no encontrado");
 	}
 
