@@ -1,5 +1,7 @@
 package ar.dino.controlador;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ar.dino.Exceptions.CustomeFieldValidationException;
 import ar.dino.Exceptions.UsernameOrIdNotFound;
 import ar.dino.dta.ChangePasswordForm;
+import ar.dino.entity.Role;
 import ar.dino.entity.User;
 import ar.dino.repo.RoleRepository;
 import ar.dino.service.UserService;
@@ -128,9 +131,12 @@ public class UserController {
   		model.addAttribute("roles",roleRepository.findAll());
   		return "user-form/user-view";
   	}
+ 
+ 
+ 
   //VIDEO 6 editar usuario
   
-  
+  // Con este metodo obtengo el usuario que quiero editar y su infomacion
   @GetMapping("/editUser/{id}")                                                      // de esta forma le decimos a spring que la url nos pasa un parametro. Fijate como lo hice en la ApiRest o en Mito
   public String getEditUserForm(Model model, @PathVariable(name ="id")Long id)throws Exception{    //el name del PathVariable es el name que viene del formulario
   		User userToEdit = userService.getUserById(id);
@@ -147,7 +153,7 @@ public class UserController {
   
   
   
-  
+  // con este recibo y guardo la informacion editada del usuario seleccionado
   @PostMapping("/editUser")
 	public String postEditUserForm(@Valid @ModelAttribute("userForm")User user, BindingResult result, ModelMap model) {
 		if(result.hasErrors()) {
@@ -167,7 +173,7 @@ public class UserController {
 				model.addAttribute("userList", userService.getAllUsers());
 				model.addAttribute("roles",roleRepository.findAll());
 				model.addAttribute("editMode","true");
-				model.addAttribute("passwordForm",new ChangePasswordForm(user.getId()));   //video 8
+				model.addAttribute("passwordForm",new ChangePasswordForm(user.getId()));   //video 8 con esto llamo al form de edit pass
 			}
 		}
 
@@ -178,7 +184,7 @@ public class UserController {
 	}
   
   
-  
+  // boton de cancelar
     @GetMapping("/userForm/cancel")
    	public String cancelEditUser(ModelMap model) {
 		return "redirect:/userForm";  //  hace un redirect al user-form 
@@ -186,7 +192,7 @@ public class UserController {
   
   
   // Video 7
-    
+  // Delete User
     @GetMapping("/deleteUser/{id}")
    	public String deleteUser(Model model, @PathVariable(name="id") Long id) {
    		try {
@@ -219,7 +225,49 @@ public class UserController {
 		}
 		return ResponseEntity.ok("Success");
 	}
+ 
   
-  
+    
+    //video 12 metodo para sign up, me trae el Role USER que necesito
+    
+    
+    @GetMapping("/signup")
+    public String signUp(Model model) {
+    	
+    	 Role userRole= roleRepository.findByName("USER");
+    	 List<Role> roles= Arrays.asList(userRole);// creo una lista con los roles para no modificar tanto el HTML, ya que lo tengo como lista
+    	 model.addAttribute("userForm", new User());
+    	 model.addAttribute("roles",roles);
+    	 model.addAttribute("signup","true"); // esta es la bandera que estoy en modo signup
+    	return "user-form/signup";
+    }
+    
+    // crear usuario desde el signup
+   
+    @PostMapping("/signup")
+	public String signupAction(@Valid @ModelAttribute("userForm")User user, BindingResult result, ModelMap model) {
+		Role userRole = roleRepository.findByName("USER");
+		List<Role> roles = Arrays.asList(userRole);
+		model.addAttribute("userForm", user);
+		model.addAttribute("roles",roles);
+		model.addAttribute("signup",true);
+
+		if(result.hasErrors()) {
+			return "user-form/signup";
+		}else {
+			try {
+				userService.createUser(user);
+			} catch (CustomeFieldValidationException cfve) {
+				result.rejectValue(cfve.getFieldName(), null, cfve.getMessage());
+				return "user-form/signup";
+			}catch (Exception e) {
+				model.addAttribute("formErrorMessage",e.getMessage());
+			}
+		}
+		return index();
+	}
+
+    
+    
   
 }
